@@ -29,6 +29,7 @@ export default function LogModal({
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const conversationId = useRef(crypto.randomUUID());
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -70,6 +71,16 @@ export default function LogModal({
     if (!nl.trim()) return;
     setParsing(true);
     setErr(null);
+
+    const promptMessageId = crypto.randomUUID();
+    window.pendo?.trackAgent("prompt", {
+      agentId: "tally-log-parse",
+      conversationId: conversationId.current,
+      messageId: promptMessageId,
+      content: nl,
+      suggestedPrompt: false,
+    });
+
     try {
       const res = await fetch("/api/log/parse", {
         method: "POST",
@@ -78,6 +89,15 @@ export default function LogModal({
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "parse failed");
+
+      window.pendo?.trackAgent("agent_response", {
+        agentId: "tally-log-parse",
+        conversationId: conversationId.current,
+        messageId: crypto.randomUUID(),
+        content: JSON.stringify(data),
+        modelUsed: "llama-3.3-70b-versatile",
+      });
+
       if (challenge.cadence !== "daily") setAmount(data.amount);
       if (data.note) setNote(data.note);
       setNl("");
@@ -96,6 +116,15 @@ export default function LogModal({
       const url = supabase.storage.from("proofs").getPublicUrl(path).data.publicUrl;
       setProofUrl(url);
       if (challenge.cadence !== "daily") {
+        const visionPromptId = crypto.randomUUID();
+        window.pendo?.trackAgent("prompt", {
+          agentId: "tally-vision-parse",
+          conversationId: conversationId.current,
+          messageId: visionPromptId,
+          content: `Extract ${challenge.unit} from uploaded image`,
+          fileUploaded: true,
+        });
+
         const res = await fetch("/api/log/vision", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -103,6 +132,15 @@ export default function LogModal({
         });
         if (res.ok) {
           const data = await res.json();
+
+          window.pendo?.trackAgent("agent_response", {
+            agentId: "tally-vision-parse",
+            conversationId: conversationId.current,
+            messageId: crypto.randomUUID(),
+            content: JSON.stringify(data),
+            modelUsed: "llama-3.2-90b-vision-preview",
+          });
+
           setAmount(data.amount);
           if (data.note) setNote(data.note);
         }

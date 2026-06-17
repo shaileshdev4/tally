@@ -16,12 +16,23 @@ export default function ChallengeAiCreate({
   const [err, setErr] = useState<string | null>(null);
   const [listening, setListening] = useState(false);
   const recRef = useRef<SpeechRecognition | null>(null);
+  const conversationId = useRef(crypto.randomUUID());
 
   async function generate(fromText?: string) {
     const text = (fromText ?? prompt).trim();
     if (!text) return setErr("Describe your challenge first.");
     setBusy(true);
     setErr(null);
+
+    const promptMessageId = crypto.randomUUID();
+    window.pendo?.trackAgent("prompt", {
+      agentId: "tally-challenge-draft",
+      conversationId: conversationId.current,
+      messageId: promptMessageId,
+      content: text,
+      suggestedPrompt: false,
+    });
+
     try {
       const res = await fetch("/api/challenge/draft", {
         method: "POST",
@@ -30,6 +41,18 @@ export default function ChallengeAiCreate({
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Could not parse that.");
+
+      const responseContent = data.draft.follow_up
+        ? data.draft.follow_up
+        : JSON.stringify(data.draft);
+      window.pendo?.trackAgent("agent_response", {
+        agentId: "tally-challenge-draft",
+        conversationId: conversationId.current,
+        messageId: crypto.randomUUID(),
+        content: responseContent,
+        modelUsed: "llama-3.3-70b-versatile",
+      });
+
       if (data.draft.follow_up) {
         setErr(data.draft.follow_up);
         setPrompt(text);
