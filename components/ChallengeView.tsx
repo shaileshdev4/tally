@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { HiArrowPath, HiCheck, HiLink, HiPlus, HiShare } from "react-icons/hi2";
 import Leaderboard from "@/components/Leaderboard";
@@ -36,6 +36,7 @@ export default function ChallengeView({
   const [recap, setRecap] = useState<string | null>(null);
   const [recapBusy, setRecapBusy] = useState(false);
   const [stravaBusy, setStravaBusy] = useState(false);
+  const recapConversationId = useRef(crypto.randomUUID());
 
   const ended = isChallengeEnded(challenge);
   const isDaily = challenge.cadence === "daily";
@@ -137,6 +138,16 @@ export default function ChallengeView({
   async function getRecap() {
     setRecapBusy(true);
     setRecap(null);
+
+    const promptMessageId = crypto.randomUUID();
+    window.pendo?.trackAgent("prompt", {
+      agentId: "tally-recap",
+      conversationId: recapConversationId.current,
+      messageId: promptMessageId,
+      content: `Generate recap for challenge: ${challenge.name}`,
+      suggestedPrompt: true,
+    });
+
     try {
       const res = await fetch("/api/recap", {
         method: "POST",
@@ -144,7 +155,17 @@ export default function ChallengeView({
         body: JSON.stringify({ challengeId: challenge.id }),
       });
       const data = await res.json();
-      setRecap(data.recap ?? "Couldn't generate a recap right now.");
+      const recapText = data.recap ?? "Couldn't generate a recap right now.";
+
+      window.pendo?.trackAgent("agent_response", {
+        agentId: "tally-recap",
+        conversationId: recapConversationId.current,
+        messageId: crypto.randomUUID(),
+        content: recapText,
+        modelUsed: "llama-3.3-70b-versatile",
+      });
+
+      setRecap(recapText);
     } catch {
       setRecap("Couldn't generate a recap right now.");
     }
