@@ -98,6 +98,12 @@ export default function JoinForm({
 
     router.push(`/c/${challenge.slug}`);
     track("member_joined", { slug: challenge.slug });
+    window.pendo?.track("member_joined", {
+      slug: challenge.slug,
+      challenge_id: challenge.id,
+      member_count: memberCount + 1,
+      category: challenge.category,
+    });
   }
 
   return (

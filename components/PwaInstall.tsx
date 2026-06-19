@@ -33,6 +33,9 @@ export default function PwaInstall() {
         type="button"
         onClick={async () => {
           await deferred.prompt();
+          window.pendo?.track("pwa_install_accepted", {
+            install_source: "banner",
+          });
           setDismissed(true);
         }}
         className="inline-flex items-center gap-2 font-display text-accent hover:underline"

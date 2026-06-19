@@ -100,6 +100,11 @@ export default function ChallengeView({
           url,
         });
         track("invite_shared", { slug: challenge.slug });
+        window.pendo?.track("invite_shared", {
+          slug: challenge.slug,
+          challenge_name: challenge.name,
+          category: challenge.category,
+        });
         setToast("Invite shared");
         return;
       } catch {
@@ -109,6 +114,11 @@ export default function ChallengeView({
     await navigator.clipboard.writeText(url);
     setCopied(true);
     track("invite_copied", { slug: challenge.slug });
+    window.pendo?.track("invite_copied", {
+      slug: challenge.slug,
+      challenge_name: challenge.name,
+      category: challenge.category,
+    });
     setToast("Invite link copied");
     setTimeout(() => setCopied(false), 1600);
   }, [challenge.name, challenge.slug]);
@@ -125,6 +135,12 @@ export default function ChallengeView({
     setStravaBusy(false);
     if (res.ok) {
       track("strava_synced", { slug: challenge.slug, amount: data.amount });
+      window.pendo?.track("strava_synced", {
+        slug: challenge.slug,
+        amount: data.amount,
+        unit: challenge.unit,
+        challenge_id: challenge.id,
+      });
       setToast(`Imported ${data.amount} ${challenge.unit} from Strava`);
     } else {
       setToast(
@@ -165,6 +181,11 @@ export default function ChallengeView({
         modelUsed: "llama-3.3-70b-versatile",
       });
 
+      window.pendo?.track("recap_generated", {
+        slug: challenge.slug,
+        challenge_id: challenge.id,
+        category: challenge.category,
+      });
       setRecap(recapText);
     } catch {
       setRecap("Couldn't generate a recap right now.");

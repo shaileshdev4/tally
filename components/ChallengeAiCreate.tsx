@@ -59,6 +59,16 @@ export default function ChallengeAiCreate({
         setBusy(false);
         return;
       }
+      window.pendo?.track("ai_challenge_drafted", {
+        prompt_length: text.length,
+        category: data.draft.category,
+        name: data.draft.name,
+        unit: data.draft.unit,
+        cadence: data.draft.cadence,
+        days: data.draft.days,
+        goal: data.draft.goal ?? null,
+        cover_count: (data.cover_urls ?? []).length,
+      });
       onDraft(data.draft, data.cover_urls ?? []);
       setPrompt("");
     } catch (e) {
