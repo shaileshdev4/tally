@@ -74,7 +74,7 @@ export default function LogModal({
 
     const promptMessageId = crypto.randomUUID();
     window.pendo?.trackAgent("prompt", {
-      agentId: "tally-log-parse",
+      agentId: "kyxPX4-VFIGjFmU1c7ogaUEvH_w",
       conversationId: conversationId.current,
       messageId: promptMessageId,
       content: nl,
@@ -91,7 +91,7 @@ export default function LogModal({
       if (!res.ok) throw new Error(data.error ?? "parse failed");
 
       window.pendo?.trackAgent("agent_response", {
-        agentId: "tally-log-parse",
+        agentId: "kyxPX4-VFIGjFmU1c7ogaUEvH_w",
         conversationId: conversationId.current,
         messageId: crypto.randomUUID(),
         content: JSON.stringify(data),
@@ -118,7 +118,7 @@ export default function LogModal({
       if (challenge.cadence !== "daily") {
         const visionPromptId = crypto.randomUUID();
         window.pendo?.trackAgent("prompt", {
-          agentId: "tally-vision-parse",
+          agentId: "kyxPX4-VFIGjFmU1c7ogaUEvH_w",
           conversationId: conversationId.current,
           messageId: visionPromptId,
           content: `Extract ${challenge.unit} from uploaded image`,
@@ -134,7 +134,7 @@ export default function LogModal({
           const data = await res.json();
 
           window.pendo?.trackAgent("agent_response", {
-            agentId: "tally-vision-parse",
+            agentId: "kyxPX4-VFIGjFmU1c7ogaUEvH_w",
             conversationId: conversationId.current,
             messageId: crypto.randomUUID(),
             content: JSON.stringify(data),
