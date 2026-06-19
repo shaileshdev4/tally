@@ -26,7 +26,7 @@ export default function ChallengeAiCreate({
 
     const promptMessageId = crypto.randomUUID();
     window.pendo?.trackAgent("prompt", {
-      agentId: "EDlKznrr_MyWfxKb0lFZusaMb5U",
+      agentId: "p0DhMtPyITlXn3gglKrFMiYywZE",
       conversationId: conversationId.current,
       messageId: promptMessageId,
       content: text,
@@ -46,7 +46,7 @@ export default function ChallengeAiCreate({
         ? data.draft.follow_up
         : JSON.stringify(data.draft);
       window.pendo?.trackAgent("agent_response", {
-        agentId: "EDlKznrr_MyWfxKb0lFZusaMb5U",
+        agentId: "p0DhMtPyITlXn3gglKrFMiYywZE",
         conversationId: conversationId.current,
         messageId: crypto.randomUUID(),
         content: responseContent,
