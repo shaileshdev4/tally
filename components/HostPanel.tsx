@@ -28,6 +28,10 @@ export default function HostPanel({
     setBusy(false);
     if (res.ok) {
       track("challenge_ended", { slug: challenge.slug });
+      window.pendo?.track("challenge_ended", {
+        slug: challenge.slug,
+        challenge_id: challenge.id,
+      });
       setMsg("Challenge ended.");
       window.location.reload();
     } else {

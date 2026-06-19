@@ -53,6 +53,13 @@ export default function ChallengeAiCreate({
         modelUsed: "llama-3.3-70b-versatile",
       });
 
+      window.pendo?.track("ai_challenge_drafted", {
+        prompt_length: text.length,
+        category: data.draft.category,
+        unit: data.draft.unit,
+        cadence: data.draft.cadence,
+        has_follow_up: Boolean(data.draft.follow_up),
+      });
       if (data.draft.follow_up) {
         setErr(data.draft.follow_up);
         setPrompt(text);

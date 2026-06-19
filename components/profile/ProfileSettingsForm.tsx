@@ -39,6 +39,10 @@ export default function ProfileSettingsForm({
 
     setSaved(true);
     setBusy(false);
+    window.pendo?.track("profile_updated", {
+      field_changed: "display_name",
+      display_name_length: clean.length,
+    });
     setTimeout(() => setSaved(false), 2500);
   }
 

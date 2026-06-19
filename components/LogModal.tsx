@@ -98,6 +98,13 @@ export default function LogModal({
         modelUsed: "llama-3.3-70b-versatile",
       });
 
+      window.pendo?.track("ai_log_parsed", {
+        slug: challenge.slug,
+        input_text_length: nl.trim().length,
+        parsed_amount: data.amount,
+        unit: challenge.unit,
+        has_note: Boolean(data.note),
+      });
       if (challenge.cadence !== "daily") setAmount(data.amount);
       if (data.note) setNote(data.note);
       setNl("");
@@ -115,6 +122,12 @@ export default function LogModal({
       setProofPath(path);
       const url = supabase.storage.from("proofs").getPublicUrl(path).data.publicUrl;
       setProofUrl(url);
+      window.pendo?.track("proof_uploaded", {
+        slug: challenge.slug,
+        challenge_id: challenge.id,
+        file_type: file.type,
+        ai_vision_used: challenge.cadence !== "daily",
+      });
       if (challenge.cadence !== "daily") {
         const visionPromptId = crypto.randomUUID();
         window.pendo?.trackAgent("prompt", {
@@ -171,6 +184,11 @@ export default function LogModal({
         queuedAt: new Date().toISOString(),
       });
       track("log_queued_offline", { slug: challenge.slug });
+      window.pendo?.track("log_queued_offline", {
+        slug: challenge.slug,
+        amount: payload.amount,
+        unit: challenge.unit,
+      });
       setBusy(false);
       onLogged();
       onClose();
@@ -184,6 +202,14 @@ export default function LogModal({
       return;
     }
     track("log_created", { slug: challenge.slug });
+    window.pendo?.track("log_created", {
+      slug: challenge.slug,
+      amount: challenge.cadence === "daily" ? 1 : amount,
+      unit: challenge.unit,
+      cadence: challenge.cadence,
+      has_note: Boolean(note.trim()),
+      has_proof: Boolean(proofPath),
+    });
     onLogged();
     onClose();
   }
