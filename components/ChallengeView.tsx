@@ -45,6 +45,14 @@ export default function ChallengeView({
 
   useEffect(() => {
     track("challenge_view", { slug: challenge.slug });
+    pendo?.track("challenge_view", {
+      slug: challenge.slug,
+      category: challenge.category,
+      cadence: challenge.cadence,
+      unit: challenge.unit,
+      is_ended: ended,
+      member_count: initialRows.length,
+    });
     (async () => {
       const u = await getUser();
       if (!u) return;
@@ -100,6 +108,10 @@ export default function ChallengeView({
           url,
         });
         track("invite_shared", { slug: challenge.slug });
+        pendo?.track("invite_shared", {
+          slug: challenge.slug,
+          category: challenge.category,
+        });
         setToast("Invite shared");
         return;
       } catch {
@@ -109,6 +121,10 @@ export default function ChallengeView({
     await navigator.clipboard.writeText(url);
     setCopied(true);
     track("invite_copied", { slug: challenge.slug });
+    pendo?.track("invite_copied", {
+      slug: challenge.slug,
+      category: challenge.category,
+    });
     setToast("Invite link copied");
     setTimeout(() => setCopied(false), 1600);
   }, [challenge.name, challenge.slug]);
@@ -125,6 +141,12 @@ export default function ChallengeView({
     setStravaBusy(false);
     if (res.ok) {
       track("strava_synced", { slug: challenge.slug, amount: data.amount });
+      pendo?.track("strava_synced", {
+        slug: challenge.slug,
+        amount: data.amount,
+        unit: challenge.unit,
+        category: challenge.category,
+      });
       setToast(`Imported ${data.amount} ${challenge.unit} from Strava`);
     } else {
       setToast(
@@ -165,6 +187,12 @@ export default function ChallengeView({
         modelUsed: "llama-3.3-70b-versatile",
       });
 
+      pendo?.track("recap_generated", {
+        slug: challenge.slug,
+        category: challenge.category,
+        member_count: initialRows.length,
+        cadence: challenge.cadence,
+      });
       setRecap(recapText);
     } catch {
       setRecap("Couldn't generate a recap right now.");

@@ -105,6 +105,10 @@ export default function ActivityFeed({
       p_challenge: challenge.id,
       p_user: userId,
     });
+    pendo?.track("log_flagged", {
+      slug: challenge.slug,
+      log_id: logId,
+    });
     setFlagged((s) => new Set(s).add(logId));
     onToast?.("Entry flagged for review");
     load();
@@ -117,6 +121,12 @@ export default function ActivityFeed({
       body: JSON.stringify({ logId, challengeId: challenge.id, hide }),
     });
     if (res.ok) {
+      pendo?.track("log_deleted", {
+        slug: challenge.slug,
+        log_id: logId,
+        action: hide ? "hidden" : "deleted",
+        is_host: Boolean(isHost),
+      });
       onToast?.(hide ? "Entry hidden from board" : "Log removed");
       load();
     } else {

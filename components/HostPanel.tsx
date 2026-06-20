@@ -28,6 +28,12 @@ export default function HostPanel({
     setBusy(false);
     if (res.ok) {
       track("challenge_ended", { slug: challenge.slug });
+      pendo?.track("challenge_ended", {
+        slug: challenge.slug,
+        category: challenge.category,
+        cadence: challenge.cadence,
+        unit: challenge.unit,
+      });
       setMsg("Challenge ended.");
       window.location.reload();
     } else {
