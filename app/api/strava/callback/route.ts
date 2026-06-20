@@ -63,5 +63,26 @@ export async function GET(req: NextRequest) {
     );
   }
 
+  try {
+    await fetch("https://data.pendo.io/data/track", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-pendo-integration-key": "0e1e4fd5-4549-44f4-b518-d179ee03238c",
+      },
+      body: JSON.stringify({
+        type: "track",
+        event: "strava_connected",
+        visitorId: user.id,
+        accountId: user.id,
+        timestamp: Date.now(),
+        properties: {
+          athlete_id: String(token.athlete?.id ?? ""),
+          redirect_destination: next,
+        },
+      }),
+    });
+  } catch {}
+
   return NextResponse.redirect(`${origin}${next}?strava=connected`);
 }

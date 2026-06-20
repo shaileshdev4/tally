@@ -60,6 +60,15 @@ export default function ChallengeAiCreate({
         return;
       }
       onDraft(data.draft, data.cover_urls ?? []);
+      pendo?.track("ai_challenge_drafted", {
+        prompt_length: text.length,
+        category: data.draft.category,
+        unit: data.draft.unit,
+        cadence: data.draft.cadence,
+        days: data.draft.days,
+        goal: data.draft.goal,
+        has_follow_up: Boolean(data.draft.follow_up),
+      });
       setPrompt("");
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Something went wrong.");

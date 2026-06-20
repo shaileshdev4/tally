@@ -100,6 +100,14 @@ export default function LogModal({
 
       if (challenge.cadence !== "daily") setAmount(data.amount);
       if (data.note) setNote(data.note);
+      pendo?.track("ai_log_parsed", {
+        slug: challenge.slug,
+        unit: challenge.unit,
+        cadence: challenge.cadence,
+        parsed_amount: data.amount,
+        has_note: Boolean(data.note),
+        input_length: nl.trim().length,
+      });
       setNl("");
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Could not parse");
@@ -115,6 +123,12 @@ export default function LogModal({
       setProofPath(path);
       const url = supabase.storage.from("proofs").getPublicUrl(path).data.publicUrl;
       setProofUrl(url);
+      pendo?.track("proof_uploaded", {
+        slug: challenge.slug,
+        unit: challenge.unit,
+        cadence: challenge.cadence,
+        file_type: file.type,
+      });
       if (challenge.cadence !== "daily") {
         const visionPromptId = crypto.randomUUID();
         window.pendo?.trackAgent("prompt", {
@@ -171,6 +185,14 @@ export default function LogModal({
         queuedAt: new Date().toISOString(),
       });
       track("log_queued_offline", { slug: challenge.slug });
+      pendo?.track("log_queued_offline", {
+        slug: challenge.slug,
+        amount: payload.amount,
+        unit: challenge.unit,
+        cadence: challenge.cadence,
+        has_note: Boolean(note.trim()),
+        has_proof: Boolean(proofPath),
+      });
       setBusy(false);
       onLogged();
       onClose();
@@ -184,6 +206,15 @@ export default function LogModal({
       return;
     }
     track("log_created", { slug: challenge.slug });
+    pendo?.track("log_created", {
+      slug: challenge.slug,
+      amount: challenge.cadence === "daily" ? 1 : amount,
+      unit: challenge.unit,
+      cadence: challenge.cadence,
+      has_note: Boolean(note.trim()),
+      has_proof: Boolean(proofPath),
+      category: challenge.category,
+    });
     onLogged();
     onClose();
   }

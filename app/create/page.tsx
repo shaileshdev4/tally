@@ -260,6 +260,17 @@ function CreatePageContent() {
 
     const { track } = await import("@/lib/analytics");
     track("challenge_created", { slug, category: cat });
+    pendo?.track("challenge_created", {
+      slug,
+      category: cat,
+      unit: resolvedUnit,
+      cadence,
+      goal: goal === "" ? null : Number(goal),
+      days,
+      cover_type: cover.type,
+      template_id: tplId || null,
+      has_custom_unit: showCustomUnitInput,
+    });
     router.push(`/c/${slug}/created`);
   }
 
