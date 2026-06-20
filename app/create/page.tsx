@@ -22,6 +22,7 @@ import {
   CATEGORY_ACCENT,
   categoryMeta,
   categoryCover,
+  FEATURED_CATEGORIES,
   isCategory,
   type Category,
 } from "@/lib/categories";
@@ -42,20 +43,18 @@ import { PAGE_HERO_IMAGES } from "@/lib/hero-images";
 function CreatePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [step, setStep] = useState<1 | 2>(1);
-  const [cat, setCat] = useState<Category>("reading");
-  const [tplId, setTplId] = useState<string>(TEMPLATES[0].id);
-  const [name, setName] = useState(TEMPLATES[0].defaultName);
-  const [unit, setUnit] = useState(TEMPLATES[0].unit);
+  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [cat, setCat] = useState<Category | null>(null);
+  const [tplId, setTplId] = useState<string>("");
+  const [name, setName] = useState("");
+  const [unit, setUnit] = useState("points");
   const [customUnit, setCustomUnit] = useState("");
-  const [goal, setGoal] = useState<number | "">(TEMPLATES[0].defaultGoal ?? "");
-  const [days, setDays] = useState(TEMPLATES[0].defaultDays);
-  const [cadence, setCadence] = useState<"total" | "daily">(
-    TEMPLATES[0].cadence,
-  );
+  const [goal, setGoal] = useState<number | "">("");
+  const [days, setDays] = useState(30);
+  const [cadence, setCadence] = useState<"total" | "daily">("total");
   const [cover, setCover] = useState<CoverValue>({
     type: "gradient",
-    value: TEMPLATES[0].gradient,
+    value: "ember",
   });
   const [suggestedCovers, setSuggestedCovers] = useState<string[]>([]);
   const [coversLoading, setCoversLoading] = useState(false);
@@ -70,13 +69,14 @@ function CreatePageContent() {
       ? `${window.location.origin}/auth/callback?next=/create`
       : "/auth/callback?next=/create";
 
-  const catMeta = categoryMeta(cat);
+  const activeCat = cat ?? "custom";
+  const catMeta = categoryMeta(activeCat);
   const catTemplates = useMemo(
-    () => TEMPLATES.filter((t) => t.category === cat),
+    () => (cat ? TEMPLATES.filter((t) => t.category === cat) : []),
     [cat],
   );
-  const unitOptions = useMemo(() => unitsForCategory(cat), [cat]);
-  const showCustomUnitInput = cat === "custom" && unit === "custom";
+  const unitOptions = useMemo(() => unitsForCategory(activeCat), [activeCat]);
+  const showCustomUnitInput = activeCat === "custom" && unit === "custom";
   const resolvedUnit = showCustomUnitInput ? customUnit.trim() : unit;
 
   const loadCoverSuggestions = async (opts?: { keywords?: string; keepSelection?: boolean }) => {
@@ -119,7 +119,7 @@ function CreatePageContent() {
   }, []);
 
   useEffect(() => {
-    if (step !== 2) return;
+    if (step !== 3) return;
     if (skipCoverFetch.current) {
       skipCoverFetch.current = false;
       return;
@@ -136,28 +136,43 @@ function CreatePageContent() {
     const qCat = searchParams.get("category");
     const qTpl = searchParams.get("template");
     if (qCat && isCategory(qCat)) {
-      chooseCat(qCat);
-      if (qTpl && templateById(qTpl)) applyTemplate(qTpl);
+      setCat(qCat);
+      const templates = TEMPLATES.filter((t) => t.category === qCat);
+      if (qTpl && templateById(qTpl)) {
+        applyTemplate(qTpl);
+        setStep(2);
+      } else if (templates.length === 0) {
+        applyCategoryDefaults(qCat);
+        setStep(3);
+      } else {
+        setStep(2);
+      }
     }
     setHydrated(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
-  function chooseCat(c: Category) {
+  function applyCategoryDefaults(c: Category) {
+    const units = unitsForCategory(c);
+    setTplId("");
+    setName("");
+    setUnit(units[0]?.value ?? "points");
+    setCustomUnit("");
+    setGoal("");
+    setCadence("total");
+    setDays(30);
+    setCover(categoryCover(c));
+  }
+
+  function pickCategory(c: Category) {
     setCat(c);
-    const first = defaultTemplateFor(c);
-    if (first) applyTemplate(first.id);
-    else {
-      const meta = categoryMeta(c);
-      const units = unitsForCategory(c);
+    const templates = TEMPLATES.filter((t) => t.category === c);
+    if (templates.length === 0) {
+      applyCategoryDefaults(c);
+      setStep(3);
+    } else {
       setTplId("");
-      setName("");
-      setUnit(units[0]?.value ?? "points");
-      setCustomUnit("");
-      setGoal("");
-      setCadence("total");
-      setDays(30);
-      setCover(categoryCover(c));
+      setStep(2);
     }
   }
 
@@ -195,11 +210,12 @@ function CreatePageContent() {
     }
     setCoversLoading(false);
     skipCoverFetch.current = true;
-    setStep(2);
+    setStep(3);
   }
 
   async function create() {
     setErr(null);
+    if (!cat) return setErr("Pick a category.");
     const clean = name.trim();
     if (!clean) return setErr("Name your challenge.");
     if (!resolvedUnit) return setErr("Pick a unit.");
@@ -263,37 +279,116 @@ function CreatePageContent() {
     router.push(`/c/${slug}/created`);
   }
 
+  const heroCopy =
+    step === 1
+      ? {
+          label: "New challenge",
+          title: "What are you tracking?",
+          subtitle: "Pick a category to start — then choose a template.",
+        }
+      : step === 2
+        ? {
+            label: catMeta.label,
+            title: "Pick a template",
+            subtitle: "Choose a starting point, then personalize it.",
+          }
+        : {
+            label: "Almost there",
+            title: "Make it yours",
+            subtitle: "Name it, set your goal, and choose a cover.",
+          };
+
   return (
-    <CategoryTheme category={cat}>
+    <CategoryTheme category={activeCat}>
       <main className="relative mx-auto max-w-2xl px-5 py-8 sm:py-12">
         <PageHero
           imageSrc={PAGE_HERO_IMAGES.create}
           size="compact"
-          label={step === 1 ? "New challenge" : "Almost there"}
-          title={step === 1 ? "What are you tracking?" : "Make it yours"}
-          subtitle={
-            step === 1
-              ? "Pick a template, browse categories, or describe it with AI."
-              : "Name it, set your goal, and choose a cover."
-          }
+          label={heroCopy.label}
+          title={heroCopy.title}
+          subtitle={heroCopy.subtitle}
         />
 
-        <ChallengeAiCreate onDraft={applyDraft} disabled={busy} />
+        {step < 3 && (
+          <>
+            <ChallengeAiCreate onDraft={applyDraft} disabled={busy} />
+            <div className="my-8 flex items-center gap-3">
+              <div className="h-px flex-1 bg-line" />
+              <span className="font-mono text-xs uppercase tracking-widest text-muted">
+                or pick manually
+              </span>
+              <div className="h-px flex-1 bg-line" />
+            </div>
+          </>
+        )}
 
-        <div className="my-8 flex items-center gap-3">
-          <div className="h-px flex-1 bg-line" />
-          <span className="font-mono text-xs uppercase tracking-widest text-muted">
-            or pick manually
-          </span>
-          <div className="h-px flex-1 bg-line" />
-        </div>
-
-        <StepIndicator step={step} />
+        <StepIndicator step={step} total={3} />
 
         {step === 1 && (
           <div className="animate-fade-in">
+            <div className="section-label mt-6">Choose a category</div>
+            <div className="mt-3 grid gap-3 sm:grid-cols-3">
+              {FEATURED_CATEGORIES.map((meta) => {
+                const a = CATEGORY_ACCENT[meta.id];
+                const tpl = defaultTemplateFor(meta.id);
+                return (
+                  <CategoryTheme key={meta.id} category={meta.id}>
+                    <button
+                      type="button"
+                      onClick={() => pickCategory(meta.id)}
+                      className="card-featured group block w-full overflow-hidden text-left"
+                    >
+                      <div className="relative h-24 w-full">
+                        <Cover
+                          type="preset"
+                          value={meta.presetCover}
+                          seed={meta.id}
+                          className="h-full w-full object-cover transition group-hover:scale-105"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-canvas/90 to-transparent" />
+                      </div>
+                      <div className="p-3">
+                        <div
+                          className="font-display font-semibold"
+                          style={{ color: a.accent }}
+                        >
+                          {meta.label}
+                        </div>
+                        <div className="mt-0.5 text-xs text-muted">{meta.blurb}</div>
+                        {tpl && (
+                          <div className="text-meta mt-1.5 normal-case tracking-normal">
+                            e.g. {tpl.label}
+                          </div>
+                        )}
+                      </div>
+                    </button>
+                  </CategoryTheme>
+                );
+              })}
+            </div>
+            <Link
+              href="/categories"
+              className="btn-secondary mt-6 inline-flex w-full justify-center sm:w-auto"
+            >
+              <HiSquares2X2 className="h-4 w-4" aria-hidden />
+              Browse all 12 categories
+            </Link>
+          </div>
+        )}
+
+        {step === 2 && cat && (
+          <div className="animate-fade-in">
+            <button
+              type="button"
+              onClick={() => setStep(1)}
+              className="inline-flex items-center gap-1 font-mono text-xs uppercase tracking-widest text-muted transition hover:text-ink"
+            >
+              <HiArrowLeft className="h-3.5 w-3.5" aria-hidden />
+              Back to categories
+            </button>
+
             <div
-              className="glass-panel mt-6 flex items-center justify-between gap-4 p-4"
+              className="glass-panel mt-4 flex items-center justify-between gap-4 p-4"
               style={{
                 borderColor: CATEGORY_ACCENT[cat].accent,
                 background: `linear-gradient(135deg, ${CATEGORY_ACCENT[cat].soft}, transparent)`,
@@ -365,7 +460,7 @@ function CreatePageContent() {
                 </p>
                 <button
                   type="button"
-                  onClick={() => setStep(2)}
+                  onClick={() => setStep(3)}
                   className="btn-secondary mt-4 text-sm"
                 >
                   Skip to personalize
@@ -376,8 +471,9 @@ function CreatePageContent() {
             {catTemplates.length > 0 && (
               <button
                 type="button"
-                onClick={() => setStep(2)}
-                className="btn-primary mt-8"
+                onClick={() => setStep(3)}
+                disabled={!tplId}
+                className="btn-primary mt-8 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Personalize
                 <HiArrowRight className="h-4 w-4" aria-hidden />
@@ -386,11 +482,11 @@ function CreatePageContent() {
           </div>
         )}
 
-        {step === 2 && (
+        {step === 3 && cat && (
           <div className="animate-fade-in">
             <button
               type="button"
-              onClick={() => setStep(1)}
+              onClick={() => setStep(catTemplates.length > 0 ? 2 : 1)}
               className="inline-flex items-center gap-1 font-mono text-xs uppercase tracking-widest text-muted transition hover:text-ink"
             >
               <HiArrowLeft className="h-3.5 w-3.5" aria-hidden />
