@@ -37,7 +37,7 @@ export default function RootLayout({
     o[m]=o[m]||function(){o._q[m===v[0]?'unshift':'push']([m].concat([].slice.call(arguments,0)));};})(v[w]);
     y=e.createElement(n);y.async=!0;y.src='https://cdn.pendo.io/agent/static/'+apiKey+'/pendo.js';
     z=e.getElementsByTagName(n)[0];z.parentNode.insertBefore(y,z);})(window,document,'script','pendo');
-})('d17a882c-4710-4483-a351-b73f3a6e1275');`,
+})('29cb2194-aa85-484f-bce1-a5efb96f859b');`,
           }}
         />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
