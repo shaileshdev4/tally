@@ -11,6 +11,7 @@ import CoverHero from "@/components/CoverHero";
 import CategoryTheme from "@/components/CategoryTheme";
 import Toast from "@/components/Toast";
 import HostPanel from "@/components/HostPanel";
+import MemberControls from "@/components/MemberControls";
 import ChallengeEndedBanner from "@/components/ChallengeEndedBanner";
 import ActivityLiveToast from "@/components/ActivityLiveToast";
 import { supabase, type Challenge, type LeaderboardRow } from "@/lib/supabase";
@@ -343,7 +344,10 @@ export default function ChallengeView({
               )}
             </div>
 
-            {userId && <HostPanel challenge={challenge} userId={userId} />}
+            {userId && isHost && <HostPanel challenge={challenge} userId={userId} />}
+            {memberId && (
+              <MemberControls challengeId={challenge.id} slug={challenge.slug} />
+            )}
           </aside>
         </div>
       </main>

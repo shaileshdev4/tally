@@ -8,6 +8,7 @@ export default async function ProfileChallengesPage() {
   if (!user) return null;
 
   const { joined, hosted, hostedOnly } = await fetchProfileContext(user.id);
+  const joinedIds = new Set(joined.map((c) => c.id));
 
   const joinedActive = joined.filter((c) => c.status !== "ended");
   const joinedEnded = joined.filter((c) => c.status === "ended");
@@ -43,7 +44,7 @@ export default async function ProfileChallengesPage() {
                 <ul className="flex flex-col gap-3">
                   {joinedActive.map((c) => (
                     <li key={c.id}>
-                      <ProfileChallengeRow challenge={c} badge="Joined" featured />
+                      <ProfileChallengeRow challenge={c} badge="Joined" featured manage="leave" />
                     </li>
                   ))}
                 </ul>
@@ -57,7 +58,7 @@ export default async function ProfileChallengesPage() {
                 <ul className="flex flex-col gap-3">
                   {joinedEnded.map((c) => (
                     <li key={`ended-${c.id}`}>
-                      <ProfileChallengeRow challenge={c} badge="Joined" />
+                      <ProfileChallengeRow challenge={c} badge="Joined" manage="leave" />
                     </li>
                   ))}
                 </ul>
@@ -80,7 +81,12 @@ export default async function ProfileChallengesPage() {
           <ul className="flex flex-col gap-3">
             {hosted.map((c) => (
               <li key={`host-${c.id}`}>
-                <ProfileChallengeRow challenge={c} badge="Hosted" featured />
+                <ProfileChallengeRow
+                  challenge={c}
+                  badge="Hosted"
+                  featured
+                  manage={joinedIds.has(c.id) ? "both" : "delete"}
+                />
               </li>
             ))}
           </ul>

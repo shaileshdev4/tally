@@ -4,6 +4,8 @@ import { useState } from "react";
 import { HiArrowPath, HiStop } from "react-icons/hi2";
 import type { Challenge } from "@/lib/supabase";
 import { track } from "@/lib/analytics";
+import { daysLeft } from "@/lib/utils";
+import ChallengeManageActions from "@/components/ChallengeManageActions";
 
 export default function HostPanel({
   challenge,
@@ -27,7 +29,11 @@ export default function HostPanel({
     });
     setBusy(false);
     if (res.ok) {
-      track("challenge_ended", { slug: challenge.slug });
+      track("challenge_ended", {
+        slug: challenge.slug,
+        category: challenge.category,
+        days_remaining: daysLeft(challenge.ends_at),
+      });
       setMsg("Challenge ended.");
       window.location.reload();
     } else {
@@ -42,16 +48,36 @@ export default function HostPanel({
         <span className="group-open:text-ink">Host controls</span>
       </summary>
       <div className="border-t border-line/60 px-4 pb-4 pt-3">
-        <p className="text-muted">End early or hide disputed logs from the feed.</p>
-        <button
-          type="button"
-          onClick={endChallenge}
-          disabled={busy || challenge.status === "ended"}
-          className="btn-secondary mt-3 text-sm disabled:opacity-50"
-        >
-          {busy ? <HiArrowPath className="h-4 w-4 animate-spin" /> : <HiStop className="h-4 w-4" />}
-          End challenge
-        </button>
+        <p className="text-muted">
+          End early (read-only board) or delete the challenge for everyone.
+        </p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={endChallenge}
+            disabled={busy || challenge.status === "ended"}
+            className="btn-secondary text-sm disabled:opacity-50"
+          >
+            {busy ? (
+              <HiArrowPath className="h-4 w-4 animate-spin" />
+            ) : (
+              <HiStop className="h-4 w-4" />
+            )}
+            End challenge
+          </button>
+          {!challenge.is_demo && (
+            <ChallengeManageActions
+              challengeId={challenge.id}
+              slug={challenge.slug}
+              variant="delete"
+            />
+          )}
+        </div>
+        {challenge.is_demo && (
+          <p className="mt-2 font-mono text-xs text-muted">
+            Demo challenges cannot be deleted.
+          </p>
+        )}
         {msg && <p className="mt-2 font-mono text-xs text-muted">{msg}</p>}
       </div>
     </details>
