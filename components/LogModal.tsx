@@ -100,6 +100,13 @@ export default function LogModal({
 
       if (challenge.cadence !== "daily") setAmount(data.amount);
       if (data.note) setNote(data.note);
+      window.pendo?.track("ai_log_parsed", {
+        slug: challenge.slug,
+        input_text_length: nl.trim().length,
+        parsed_amount: data.amount,
+        unit: challenge.unit,
+        had_note: Boolean(data.note),
+      });
       setNl("");
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Could not parse");
@@ -115,6 +122,8 @@ export default function LogModal({
       setProofPath(path);
       const url = supabase.storage.from("proofs").getPublicUrl(path).data.publicUrl;
       setProofUrl(url);
+      let aiVisionUsed = false;
+      let aiExtractedAmount: number | null = null;
       if (challenge.cadence !== "daily") {
         const visionPromptId = crypto.randomUUID();
         window.pendo?.trackAgent("prompt", {
@@ -143,8 +152,16 @@ export default function LogModal({
 
           setAmount(data.amount);
           if (data.note) setNote(data.note);
+          aiVisionUsed = true;
+          aiExtractedAmount = data.amount;
         }
       }
+      window.pendo?.track("proof_uploaded", {
+        slug: challenge.slug,
+        cadence: challenge.cadence,
+        ai_vision_used: aiVisionUsed,
+        ai_extracted_amount: aiExtractedAmount,
+      });
     }
     setUploading(false);
   }
@@ -171,6 +188,11 @@ export default function LogModal({
         queuedAt: new Date().toISOString(),
       });
       track("log_queued_offline", { slug: challenge.slug });
+      window.pendo?.track("log_queued_offline", {
+        slug: challenge.slug,
+        amount: payload.amount,
+        cadence: challenge.cadence,
+      });
       setBusy(false);
       onLogged();
       onClose();
@@ -184,6 +206,14 @@ export default function LogModal({
       return;
     }
     track("log_created", { slug: challenge.slug });
+    window.pendo?.track("log_created", {
+      slug: challenge.slug,
+      amount: payload.amount,
+      has_note: Boolean(payload.note),
+      has_proof: Boolean(proofPath),
+      cadence: challenge.cadence,
+      unit: challenge.unit,
+    });
     onLogged();
     onClose();
   }

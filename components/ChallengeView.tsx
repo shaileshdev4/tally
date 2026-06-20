@@ -46,6 +46,12 @@ export default function ChallengeView({
 
   useEffect(() => {
     track("challenge_view", { slug: challenge.slug });
+    window.pendo?.track("challenge_view", {
+      slug: challenge.slug,
+      category: challenge.category,
+      cadence: challenge.cadence,
+      is_ended: ended,
+    });
     (async () => {
       const u = await getUser();
       if (!u) return;
@@ -101,6 +107,11 @@ export default function ChallengeView({
           url,
         });
         track("invite_shared", { slug: challenge.slug });
+        window.pendo?.track("invite_shared", {
+          slug: challenge.slug,
+          category: challenge.category,
+          share_method: "native_share",
+        });
         setToast("Invite shared");
         return;
       } catch {
@@ -110,6 +121,10 @@ export default function ChallengeView({
     await navigator.clipboard.writeText(url);
     setCopied(true);
     track("invite_copied", { slug: challenge.slug });
+    window.pendo?.track("invite_copied", {
+      slug: challenge.slug,
+      category: challenge.category,
+    });
     setToast("Invite link copied");
     setTimeout(() => setCopied(false), 1600);
   }, [challenge.name, challenge.slug]);
@@ -126,6 +141,11 @@ export default function ChallengeView({
     setStravaBusy(false);
     if (res.ok) {
       track("strava_synced", { slug: challenge.slug, amount: data.amount });
+      window.pendo?.track("strava_synced", {
+        slug: challenge.slug,
+        amount: data.amount,
+        unit: challenge.unit,
+      });
       setToast(`Imported ${data.amount} ${challenge.unit} from Strava`);
     } else {
       setToast(
@@ -167,6 +187,11 @@ export default function ChallengeView({
       });
 
       setRecap(recapText);
+      window.pendo?.track("recap_generated", {
+        slug: challenge.slug,
+        category: challenge.category,
+        recap_length: recapText.length,
+      });
     } catch {
       setRecap("Couldn't generate a recap right now.");
     }

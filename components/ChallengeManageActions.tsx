@@ -46,6 +46,9 @@ export default function ChallengeManageActions({
       return;
     }
     track("challenge_left", { slug });
+    window.pendo?.track("challenge_left", {
+      slug,
+    });
     onDone?.();
     router.refresh();
   }
@@ -72,6 +75,9 @@ export default function ChallengeManageActions({
       return;
     }
     track("challenge_deleted", { slug });
+    window.pendo?.track("challenge_deleted", {
+      slug,
+    });
     onDone?.();
     router.push("/profile/challenges");
     router.refresh();

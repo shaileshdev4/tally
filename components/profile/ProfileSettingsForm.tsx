@@ -38,6 +38,9 @@ export default function ProfileSettingsForm({
     }
 
     setSaved(true);
+    window.pendo?.track("profile_updated", {
+      display_name_changed: clean !== initialName,
+    });
     setBusy(false);
     setTimeout(() => setSaved(false), 2500);
   }

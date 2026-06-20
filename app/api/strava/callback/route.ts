@@ -49,6 +49,7 @@ export async function GET(req: NextRequest) {
   if (!user) return NextResponse.redirect(`${origin}/auth/complete?next=${encodeURIComponent(next)}`);
 
   const admin = supabaseAdmin();
+  const athleteId = String(token.athlete?.id ?? "");
   if (admin) {
     await admin.from("member_integrations").upsert(
       {
@@ -57,10 +58,32 @@ export async function GET(req: NextRequest) {
         access_token: token.access_token,
         refresh_token: token.refresh_token,
         expires_at: new Date(token.expires_at * 1000).toISOString(),
-        athlete_id: String(token.athlete?.id ?? ""),
+        athlete_id: athleteId,
       },
       { onConflict: "user_id,provider" }
     );
+  }
+
+  try {
+    await fetch("https://data.pendo.io/data/track", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-pendo-integration-key": "66051853-c399-4744-adc8-0ab86e02cf0b",
+      },
+      body: JSON.stringify({
+        type: "track",
+        event: "strava_connected",
+        visitorId: user.id,
+        accountId: user.id,
+        timestamp: Date.now(),
+        properties: {
+          athlete_id: athleteId,
+        },
+      }),
+    });
+  } catch {
+    // Do not block the redirect if Pendo tracking fails
   }
 
   return NextResponse.redirect(`${origin}${next}?strava=connected`);

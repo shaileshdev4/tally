@@ -34,6 +34,11 @@ export default function HostPanel({
         category: challenge.category,
         days_remaining: daysLeft(challenge.ends_at),
       });
+      window.pendo?.track("challenge_ended", {
+        slug: challenge.slug,
+        category: challenge.category,
+        days_remaining: daysLeft(challenge.ends_at),
+      });
       setMsg("Challenge ended.");
       window.location.reload();
     } else {

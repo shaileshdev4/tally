@@ -33,6 +33,10 @@ export default function PwaInstall() {
         type="button"
         onClick={async () => {
           await deferred.prompt();
+          const choice = await deferred.userChoice;
+          window.pendo?.track("pwa_install_prompted", {
+            install_outcome: choice.outcome,
+          });
           setDismissed(true);
         }}
         className="inline-flex items-center gap-2 font-display text-accent hover:underline"
